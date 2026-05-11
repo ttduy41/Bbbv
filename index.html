@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bói Tình Yêu - Theo Tên & Ngày Sinh</title>
+    <style>
+        :root {
+            --pink-neon: #ff007f;
+            --purple-dark: #1a0b2e;
+        }
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Arial', sans-serif;
+            background: #0f021d url('https://boitinhyeu.com/images/bg-body.jpg') no-repeat center top;
+            background-size: cover;
+            background-attachment: fixed;
+            color: #fff;
+            display: flex; flex-direction: column; min-height: 100vh;
+        }
+        /* Header */
+        header {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 10px 0;
+            text-align: center;
+            border-bottom: 1px solid var(--pink-neon);
+        }
+        .logo { font-weight: bold; color: var(--pink-neon); font-size: 20px; text-transform: uppercase; }
+
+        .container { flex: 1; padding: 20px; text-align: center; }
+        h1 { font-size: 28px; margin: 20px 0 10px; color: #fff; text-shadow: 0 0 10px var(--pink-neon); }
+        .desc { font-size: 14px; margin-bottom: 30px; opacity: 0.8; }
+
+        /* Form giống 100% */
+        .box-boi {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 0, 127, 0.3);
+            border-radius: 15px;
+            padding: 25px;
+            max-width: 450px;
+            margin: 0 auto;
+            backdrop-filter: blur(5px);
+        }
+        .input-group { margin-bottom: 20px; text-align: left; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 14px; color: var(--pink-neon); }
+        input {
+            width: 100%; padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid #444;
+            border-radius: 8px;
+            color: #fff;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        input:focus { border-color: var(--pink-neon); outline: none; }
+
+        .btn-boi {
+            background: linear-gradient(to right, #ff007f, #8000ff);
+            color: #fff;
+            border: none;
+            width: 100%;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            text-transform: uppercase;
+            box-shadow: 0 0 15px var(--pink-neon);
+            transition: 0.3s;
+        }
+        .btn-boi:active { transform: scale(0.95); }
+
+        /* Modal kết quả */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 1000;
+            justify-content: center; align-items: center;
+        }
+        .result-card {
+            background: #1a0b2e;
+            width: 90%; max-width: 400px;
+            border-radius: 20px;
+            border: 2px solid var(--pink-neon);
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+        .close-btn { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; }
+        
+        .heart-animation {
+            font-size: 60px;
+            color: var(--pink-neon);
+            animation: beat 0.8s infinite alternate;
+            margin: 15px 0;
+        }
+        @keyframes beat { from { transform: scale(1); } to { transform: scale(1.2); } }
+
+        .percent-box { font-size: 50px; font-weight: 900; margin: 10px 0; color: #fff; }
+        .loading-bar {
+            width: 100%; height: 10px; background: #333; border-radius: 5px; margin: 20px 0; overflow: hidden;
+        }
+        .progress { width: 0%; height: 100%; background: var(--pink-neon); transition: width 0.1s; }
+        
+        .res-names { font-size: 18px; font-weight: bold; margin-bottom: 10px; color: var(--pink-neon); }
+        .advice { font-size: 14px; line-height: 1.6; color: #ddd; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo">BOITINHYEU.COM</div>
+</header>
+
+<div class="container">
+    <h1>BÓI TÌNH YÊU</h1>
+    <p class="desc">Khám phá mức độ tâm đầu ý hợp của bạn và người ấy!</p>
+
+    <div class="box-boi">
+        <div class="input-group">
+            <label>TÊN CỦA BẠN (NAM)</label>
+            <input type="text" id="name1" placeholder="Nhập họ và tên...">
+        </div>
+        <div class="input-group">
+            <label>TÊN NGƯỜI ẤY (NỮ)</label>
+            <input type="text" id="name2" placeholder="Nhập họ và tên...">
+        </div>
+        <button class="btn-boi" onclick="startCalculating()">XEM KẾT QUẢ</button>
+    </div>
+</div>
+
+<div id="modalResult" class="modal">
+    <div class="result-card">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <div class="res-names" id="showNames"></div>
+        <div class="heart-animation">❤</div>
+        <div class="percent-box" id="percentTxt">0%</div>
+        <div class="loading-bar"><div class="progress" id="progressBar"></div></div>
+        <div class="advice" id="adviceTxt">Đang kết nối sợi dây tơ hồng...</div>
+    </div>
+</div>
+
+<script>
+    function startCalculating() {
+        let n1 = document.getElementById('name1').value.trim();
+        let n2 = document.getElementById('name2').value.trim();
+        if(!n1 || !n2) { alert("Mày chưa nhập tên kìa!"); return; }
+
+        let n1L = n1.toLowerCase();
+        let n2L = n2.toLowerCase();
+        let finalP = 0;
+
+        // ƯU TIÊN 100% CHO VINH & MY
+        const matchVinh = n1L.includes("đỗ hoàng vinh") || n2L.includes("đỗ hoàng vinh");
+        const matchMy = n1L.includes("nguyễn thị diễm my") || n2L.includes("nguyễn thị diễm my");
+
+        if(matchVinh && matchMy) {
+            finalP = 100;
+        } else {
+            // Hash cố định
+            let combined = (n1L + n2L).split('').sort().join('');
+            let sum = 0;
+            for(let i=0; i<combined.length; i++) sum += combined.charCodeAt(i);
+            finalP = (sum % 41) + 50; 
+        }
+
+        document.getElementById('showNames').innerText = n1 + " & " + n2;
+        document.getElementById('modalResult').style.display = 'flex';
+        
+        let count = 0;
+        let bar = document.getElementById('progressBar');
+        let txt = document.getElementById('percentTxt');
+        
+        let itv = setInterval(() => {
+            if(count >= finalP) {
+                clearInterval(itv);
+                showFinalAdvice(finalP);
+            } else {
+                count++;
+                txt.innerText = count + "%";
+                bar.style.width = count + "%";
+            }
+        }, 30);
+    }
+
+    function showFinalAdvice(p) {
+        let a = document.getElementById('adviceTxt');
+        if(p === 100) {
+            a.innerHTML = "<span style='color:#ff007f; font-weight:bold;'>Tuyệt vời!</span> Đỗ Hoàng Vinh và Nguyễn Thị Diễm My là cặp đôi trời sinh. Hai bạn có sợi dây liên kết không thể tách rời!";
+        } else {
+            a.innerText = "Mức độ hòa hợp khá cao. Hãy cùng nhau chia sẻ nhiều hơn để tình cảm thêm bền chặt nhé!";
+        }
+    }
+
+    function closeModal() {
+        document.getElementById('modalResult').style.display = 'none';
+        document.getElementById('progressBar').style.width = '0%';
+    }
+</script>
+
+</body>
+</html>
